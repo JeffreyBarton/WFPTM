@@ -4,7 +4,7 @@
 :Revision: version#
 :License: Public Domain
 
-= Project: {Project}
+= Project: Pan/Tilt Speakers that point towards your face using a deep nueral network to orient them.
 
 The goal is to orient speakers based on the visual location of the listeners face using a webcam. 
 
