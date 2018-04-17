@@ -1,4 +1,4 @@
-:Author: tachos
+:Author: Jeff Barton
 :Email: jeffbarton17@gmail.com
 :Date: 12/04/2018
 :Revision: version#
@@ -6,53 +6,110 @@
 
 = Project: {Project}
 
-Describe your project
+The goal is to orient speakers based on the visual location of the listeners face using a webcam. 
 
-== Step 1: Installation
-Please describe the steps to install this project.
+Face recgnition is done with the deep nueral network module in OpenCV. This work is based on Adrian Rosebrock. 
 
-For example:
+To point the speakers towards the user, I designed a Pan/Tilt mechanism specific for a set of speakers. I've shared this code on thingiverse.
 
-1. Open this file
-2. Edit as you like
-3. Release to the World!
+== Step 1: Hardware
 
-== Step 2: Assemble the circuit
+The speaker pan/tilt system uses  4 Servos, some 3D printed mounts, an arduino, a PWM Servo Driver, a webcam, and a computer.
 
-Assemble the circuit following the diagram layout.png attached to the sketch
+== Speaker Build
+Please print the things attached here:
+https://www.thingiverse.com/thing:2865682
+I wanted this project to be modular so that it can work with a variety of speakers. 
 
-== Step 3: Load the code
+You will have to design your own speaker mount. Just make sure that you put a 38mm x 7mm circle on either side of your mount. You can then use the colars to turn those circles into gears. 
 
-Upload the code contained in this sketch on to your board
+The base was also designed for my speakers, but it can be adapted pretty easy. Just expand the center base, or raise the arms up. Put another gear colar on the bottom for the horizontal motion.
 
-=== Folder structure
+The servo gears include an adapter so it can be used for a variety of servos. I used SG90 Tower Pro servos, and they worked well.
 
-....
- sketch123                => Arduino sketch folder
-  ├── sketch123.ino       => main Arduino file
-  ├── schematics.png      => (optional) an image of the required schematics
-  ├── layout.png          => (optional) an image of the layout
-  └── ReadMe.adoc         => this file
-....
+I also found some 7mm bearings to help take the weight off of the servos. These can be found on amazon for about 75 cents each.
 
-=== License
-This project is released under a {License} License.
+Mount the two speaker towers on the same horizontal axis.
 
-=== Contributing
-To contribute to this project please contact tachos <jeffbarton17@gmail.com>
+To connect the servo driver to the arduino, just use 5 jumpers to connect the correct pins.
 
-=== BOM
-Add the bill of the materials you need for this project.
+Aditional help can be found here:
+https://learn.adafruit.com/adafruit-16-channel-pwm-slash-servo-shield
 
-|===
-| ID | Part name      | Part number | Quantity
-| R1 | 10k Resistor   | 1234-abcd   | 10       
-| L1 | Red LED        | 2345-asdf   | 5        
-| A1 | Arduino Zero   | ABX00066    | 1        
-|===
+Servo Driver:
+https://www.amazon.com/dp/B014KTSMLA/ref=sxbs_sxwds-stvpv2_1?pf_rd_m=ATVPDKIKX0DER&pf_rd_p=3534659722&pd_rd_wg=0fO8y&pf_rd_r=GTJYNRSKF09JFJQ7C3RV&pf_rd_s=desktop-sx-bottom-slot&pf_rd_t=301&pd_rd_i=B014KTSMLA&pd_rd_w=M22CU&pf_rd_i=servo+hat&pd_rd_r=496f3790-ecc5-42cf-9f2c-781c34f2cd23&ie=UTF8&qid=1523942427&sr=1
+
+Arduino Uno:
+https://www.amazon.com/Arduino-Uno-R3-Microcontroller-A000066/dp/B008GRTSV6/ref=sr_1_3?s=electronics&ie=UTF8&qid=1523942478&sr=1-3&keywords=arduino+uno
+
+Servo:
+https://www.amazon.com/J-Deal-Micro-Helicopter-Airplane-Controls/dp/B015H5AVZG/ref=sr_1_5?s=toys-and-games&ie=UTF8&qid=1523942500&sr=1-5&keywords=SG90+servo+5
+
+Bearing:
+https://www.amazon.com/XiKe-Skateboard-Bearings-608-2RS-8x22x7mm/dp/B01N96X5R0/ref=sr_1_4?s=toys-and-games&ie=UTF8&qid=1523942523&sr=1-4&keywords=7mm+bearing
+
+I also used a 5V 2.5A external power supply attached to the servo driver to help supply power to the servos.
+
+== 2. Programming
 
 
-=== Help
-This document is written in the _AsciiDoc_ format, a markup language to describe documents. 
-If you need help you can search the http://www.methods.co.nz/asciidoc[AsciiDoc homepage]
-or consult the http://powerman.name/doc/asciidoc[AsciiDoc cheatsheet]
+To communicate between Python and the servos. I setup a simple serial communication on the arduino. The servo driver communicates in i2c, so the arduino is a relay between your computer the and servo driver.
+
+The file is sketch_apr11a.ino.
+
+The arduino waits until a string setup in the following way is sent. It looks for a string with a \n char at the end. Then the channel followed by the comma char, then the servo position followed by the \n char. Python can send this using pySerial.
+
+"Sending \n channel , position \n"
+
+Once the channel and position are recieved, it uses the Adafruit PWM Servo Driver library to send a i2c message which sets the pwm for the servo. 
+
+SERVOMIN and SERVOMAX should be changed based on your needs to match the servo limits.
+
+You can use the Arduino IDE or Arduino create web interface to upload the sketch to the arduino. 
+
+
+== 3. Software
+
+Make sure you have the following packeges installed:
+
+1. imutils, numpy, argparse, cv2, serial.
+
+Lets take a look at detect_faces_video.py.
+
+To setup the serial connection to arduino, use the following command. Change 'COM3' to the specific COM on your computer. You can find this in device manager under COM devices.
+
+arduino = serial.Serial('COM3',115200,timeout=.1)
+
+I made a function that encodes the servo channel and position into a byte array and then sends in over the serial connection using the following command.
+
+arduino.write(command) 
+
+I then do a check to see if it got my command and decoded the position and channel correctly.
+
+== 4. Face Recognition
+
+Now that most of the hardware setup is done, lets take a look at the face recognition. For additonal help please see this webstie: https://www.pyimagesearch.com/2018/02/26/face-detection-with-opencv-and-deep-learning/. I used that website to help me setup the program. Most of the code is directly implemented from Adrian, and I expanded on the system to have it work with my equipment.
+
+The dnn module of openCV was added in 2017, so it's fairly new at the time this was written. 
+
+The dnn was trained by Adrian from pyimagesearch and is contained in two files. "Deploy.prototxt.txt" and "res10_300x300_ssd_iter_140000.caffemodel"
+
+The first defines the layer architecture for the nueral net, while the second file contains all of the weights. The dnn is created in one line of code.
+
+net = cv2.dnn.readNetFromCaffe(protoFile, modelFile)
+
+Next, the user needs to read in frames howver you like. I used the imutils VideStream package.
+
+Once you recieve the frame, resize it to the appropriate size. This nueral net was trained on a 300x300 pixel image. So I resized to 300x400. 
+
+To find the faces, use the following commands. This inputs the image to the nueral net, then progogates it forward. It returns any detected faces.
+
+blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 1.0,
+		(300, 300), (104.0, 177.0, 123.0))
+net.setInput(blob)
+detections = net.forward()
+
+The next block simply draws a rectange around the face, and then displays the confidence. 
+
+At this point, everything should be up and running!
+
