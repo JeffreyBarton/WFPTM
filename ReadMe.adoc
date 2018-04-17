@@ -113,3 +113,23 @@ The next block simply draws a rectange around the face, and then displays the co
 
 At this point, everything should be up and running!
 
+== 5. Speaker Orientation
+
+Currently, the speakers use the X,Y corrdinates of the face to move based on the field of view of the camera. This is a simply and rudimentary way to orient the speakers. Proper depth esimation requires stereo cameras, or a moving camera, which we don't have in this project. 
+
+Instead, you can try and use the known face dimensions to esimate the depth of the object. Then using this estimate and the known distance between the camera and the speaker to calculate a distance and angle. The angle between the object and camera can be estimated using a right triangle and the horizontal x coordinate from the center of the frame. The same approach can be used for the vertical axis.
+
+So the algorithm goes like this.
+
+1. Estiamate the depth using the known face size.
+2. Calculate the horizontal position using the X coordinate. I would make this relative to the depth estimate. 
+3. Using the depth estimate and the horizontal position, calculate the angle between the two. This is just a right triangle problem.
+4. Now, using the angle and the known distance between the camera and speaker, make another triangle with the hytpotenuse pointing from the speaker to the face, and the long side from the camera to the object. 
+5. Recompute the angle for this speaker. This is the position you want to set the servos.
+
+I haven't implemented this mainly because step 4 doesn't seem to be correct. Further work could be done on this.
+
+== 6. Future work.
+
+I would really like to see a beamforming approach done with this. It would make it super cool because you could trying and play different music for different faces that you detect. You would need a really directional beam forming array to do this.
+
